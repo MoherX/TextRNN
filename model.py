@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow.contrib import learn
-from tensorflow.models.rnn import rnn, rnn_cell
+
 
 from lstm_bn import BNLSTMCell
 
@@ -18,11 +18,11 @@ class Model():
         self.args = args
 
         if args.model == 'rnn':
-            cell_fn = rnn_cell.BasicRNNCell
+            cell_fn = tf.nn.rnn_cell.BasicRNNCell
         elif args.model == 'gru':
-            cell_fn = rnn_cell.GRUCell
+            cell_fn = tf.nn.rnn_cell.GRUCell
         elif args.model == 'lstm':
-            cell_fn = rnn_cell.BasicLSTMCell
+            cell_fn = tf.nn.rnn_cell.BasicLSTMCell
         elif args.model == 'bn-lstm':
             cell_fn = BNLSTMCell
         else:
@@ -33,7 +33,7 @@ class Model():
             cell = cell_fn(args.rnn_size, bn=args.bn_level, deterministic=deterministic)
         else:
             cell = cell_fn(args.rnn_size)
-        self.cell = cell = rnn_cell.MultiRNNCell([cell] * args.num_layers)
+        self.cell = cell = tf.nn.rnn_cell.MultiRNNCell([cell] * args.num_layers)
 
         self.input_data = tf.placeholder(tf.int64, [None, args.seq_length])
         # self.targets = tf.placeholder(tf.int64, [None, args.seq_length])  # seq2seq model
@@ -49,7 +49,7 @@ class Model():
                 inputs = tf.split(1, args.seq_length, embedded)
                 inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
 
-        outputs, last_state = rnn.rnn(cell, inputs, self.initial_state, scope='rnnLayer')
+        outputs, last_state = tf.nn.rnn(cell, inputs, self.initial_state, scope='rnnLayer')
 
         with tf.variable_scope('softmaxLayer'):
             softmax_w = tf.get_variable('w', [args.rnn_size, args.label_size])
