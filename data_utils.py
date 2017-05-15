@@ -230,7 +230,7 @@ def data_to_token_ids(data_path, target_path, vocabulary_path,
                     tokens_file.write(" ".join([str(tok) for tok in token_ids]) + "\n")
 
 
-def prepare_data(data_dir, data_file, vocabulary_size, tokenizer=None):
+def prepare_data(data_dir, data_file, label_file, vocabulary_size, tokenizer=None):
     """Preapre all necessary files that are required for the training.
 
     Args:
@@ -258,6 +258,6 @@ def prepare_data(data_dir, data_file, vocabulary_size, tokenizer=None):
 
 
 if __name__ == "__main__":
-    train_ids_path, vocab_path = prepare_data("../../data/data_by_ocean/eclipse/textForLDA_final.csv",
-                                              "../../data/data_by_ocean/eclipse/textForLDA_final.csv",
+    train_ids_path, vocab_path = prepare_data("../../data/data_by_ocean/eclipse/",
+                                              "textForLDA_final.csv",
                                               4000)
