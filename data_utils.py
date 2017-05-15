@@ -246,7 +246,7 @@ def prepare_data(data_dir, data_file, vocabulary_size, tokenizer=None):
         (2) path to the "to language" vocabulary file.
     """
     # Create vocabularies of the appropriate sizes.
-    vocab_path = os.path.join(data_dir, "bug" % vocabulary_size)
+    vocab_path = os.path.join(data_dir, "bug%d" % vocabulary_size)
     train_path = os.path.join(data_dir, data_file)
     create_vocabulary(vocab_path, train_path, vocabulary_size, tokenizer)
 
