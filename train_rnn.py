@@ -27,6 +27,8 @@ import tensorflow as tf
 
 from tensorflow.contrib import learn
 
+import data_helper
+
 FLAGS = None
 
 MAX_DOCUMENT_LENGTH = 10
@@ -89,19 +91,25 @@ def rnn_model(features, target):
 def main(unused_argv):
     global n_words
     # Prepare training and testing data
-    dbpedia = learn.datasets.load_dataset(
-        'dbpedia', test_with_fake_data=FLAGS.test_with_fake_data)
-    x_train = pandas.DataFrame(dbpedia.train.data)[1]
-    y_train = pandas.Series(dbpedia.train.target)
-    x_test = pandas.DataFrame(dbpedia.test.data)[1]
-    y_test = pandas.Series(dbpedia.test.target)
+    bug_data = data_helper.load_data(FLAGS.data_file, FLAGS.label_file)
+    x = pandas.DataFrame(bug_data.train.data)[1]
+    y = pandas.Series(bug_data.train.target)
 
     # Process vocabulary
     vocab_processor = learn.preprocessing.VocabularyProcessor(MAX_DOCUMENT_LENGTH)
-    x_train = np.array(list(vocab_processor.fit_transform(x_train)))
-    x_test = np.array(list(vocab_processor.transform(x_test)))
+    x = np.array(list(vocab_processor.fit_transform(x)))
     n_words = len(vocab_processor.vocabulary_)
     print('Total words: %d' % n_words)
+
+    np.random.seed(10)
+    shuffle_indices = np.random.permutation(np.arange(len(y)))
+    x_shuffled = x[shuffle_indices]
+    y_shuffled = y[shuffle_indices]
+    dev_sample_index = -1 * int(FLAGS.test_sample_percentage * float(len(y)))
+    x_train, x_test = x_shuffled[:dev_sample_index], x_shuffled[dev_sample_index:]
+    y_train, y_test = y_shuffled[:dev_sample_index], y_shuffled[dev_sample_index:]
+
+
 
     # Build model
     # Switch between rnn_model and bag_of_words_model to test different models.
@@ -130,6 +138,24 @@ if __name__ == '__main__':
         '--bow_model',
         default=False,
         help='Run with BOW model instead of RNN.',
+        action='store_true'
+    )
+    parser.add_argument(
+        '--data_file',
+        default="../../data/data_by_ocean/eclipse/textForLDA_final.csv",
+        help='data path',
+        action='store_true'
+    )
+    parser.add_argument(
+        '--label_file',
+        default="../../data/data_by_ocean/eclipse/fixer.csv",
+        help='label path',
+        action='store_true'
+    )
+    parser.add_argument(
+        '--test_sample_percentage',
+        default=.2,
+        help='Percentage of the training data to use for test',
         action='store_true'
     )
     FLAGS, unparsed = parser.parse_known_args()
