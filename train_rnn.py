@@ -35,7 +35,6 @@ MAX_DOCUMENT_LENGTH = 10
 EMBEDDING_SIZE = 50
 n_words = 0
 
-
 def bag_of_words_model(features, target):
     """A bag-of-words model. Note it disregards the word order in the text."""
     target = tf.one_hot(target, 15, 1, 0)

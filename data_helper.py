@@ -1,10 +1,13 @@
 #!/usr/lib/env python
 # -*- code:utf-8 -*-
 
-import os
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+
 import collections
 import csv
-
 import numpy as np
 
 from tensorflow.python.platform import gfile
@@ -26,3 +29,7 @@ def load_data(data_file, label_file):
     target = np.array(target)
     data = np.array(data)
     return Dataset(data=data, target=target)
+
+
+def create_vocabulary():
+    pass
