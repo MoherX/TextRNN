@@ -260,4 +260,5 @@ def prepare_data(data_dir, data_file, label_file, vocabulary_size, tokenizer=Non
 if __name__ == "__main__":
     train_ids_path, vocab_path = prepare_data("../../data/data_by_ocean/eclipse/",
                                               "textForLDA_final.csv",
+                                              "fixer.csv",
                                               4000)
