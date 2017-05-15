@@ -199,7 +199,7 @@ def sentence_to_token_ids(sentence, vocabulary,
     return [vocabulary.get(_DIGIT_RE.sub(b"0", w), UNK_ID) for w in words]
 
 
-def data_to_token_ids(data_path, target_path, vocabulary_path,
+def data_to_token_ids(data_path, label_path, target_train_path, target_test_path, vocabulary_path,
                       tokenizer=None, normalize_digits=True):
     """Tokenize data file and turn into token-ids using given vocabulary file.
 
@@ -208,18 +208,21 @@ def data_to_token_ids(data_path, target_path, vocabulary_path,
   for sentence_to_token_ids on the details of token-ids format.
 
   Args:
-    data_path: path to the data file in one-sentence-per-line format.
-    target_path: path where the file with token-ids will be created.
+    data_path: path to the train data file in one-sentence-per-line format.
+    label_path: path to the test data file in one-sentence-per-line format.
+    target_train_path: path where the file with train data token-ids will be created.
+    target_test_path: path where the file with test data token-ids will be created.
     vocabulary_path: path to the vocabulary file.
     tokenizer: a function to use to tokenize each sentence;
       if None, basic_tokenizer will be used.
     normalize_digits: Boolean; if true, all digits are replaced by 0s.
   """
-    if not gfile.Exists(target_path):
+    if not gfile.Exists(target_train_path):
         print("Tokenizing data in %s" % data_path)
         vocab, _ = initialize_vocabulary(vocabulary_path)
+
         with gfile.GFile(data_path, mode="rb") as data_file:
-            with gfile.GFile(target_path, mode="w") as tokens_file:
+            with gfile.GFile(target_train_path, mode="w") as tokens_file:
                 counter = 0
                 for line in data_file:
                     counter += 1
@@ -246,13 +249,15 @@ def prepare_data(data_dir, data_file, label_file, vocabulary_size, tokenizer=Non
         (2) path to the "to language" vocabulary file.
     """
     # Create vocabularies of the appropriate sizes.
-    vocab_path = os.path.join(data_dir, "bug%d" % vocabulary_size)
+    vocab_path = os.path.join(data_dir, "rnn/bug%d" % vocabulary_size)
     train_path = os.path.join(data_dir, data_file)
     create_vocabulary(vocab_path, train_path, vocabulary_size, tokenizer)
 
     # Create token ids for the training data.
-    train_ids_path = train_path + (".ids%d" % vocabulary_size)
-    data_to_token_ids(train_path, train_ids_path, vocab_path, tokenizer)
+    label_path = os.path.join(data_dir, label_file)
+    train_ids_path = train_path + ("/rnn/.train.ids%d" % vocabulary_size)
+    test_ids_path = train_path + ("/rnn/.test.ids%d" % vocabulary_size)
+    data_to_token_ids(train_path, label_path, train_ids_path, test_ids_path, vocab_path, tokenizer)
 
     return train_ids_path, vocab_path
 
