@@ -25,6 +25,8 @@ import tarfile
 
 from six.moves import urllib
 
+from sklearn.preprocessing import LabelBinarizer
+
 from tensorflow.python.platform import gfile
 import tensorflow as tf
 
@@ -217,6 +219,20 @@ def data_to_token_ids(data_path, label_path, target_train_path, target_test_path
       if None, basic_tokenizer will be used.
     normalize_digits: Boolean; if true, all digits are replaced by 0s.
   """
+    if not gfile.Exists(target_test_path):
+        print("Tokenizing data in %s" % label_path)
+        labels = []
+        with gfile.GFile(vocabulary_path, mode="rb") as f:
+            labels.extend(f.readlines())
+            labels = [tf.compat.as_bytes(line.strip()) for line in labels]
+        lb = LabelBinarizer()
+        y = lb.fit_transform(labels)
+        with gfile.GFile(target_test_path, mode="w") as labels_file:
+            for line in y:
+                labels_file.write(" ".join([str(lab) for lab in line])+"\n")
+    else:
+        raise ValueError("Vocabulary file %s not found.", vocabulary_path)
+
     if not gfile.Exists(target_train_path):
         print("Tokenizing data in %s" % data_path)
         vocab, _ = initialize_vocabulary(vocabulary_path)
