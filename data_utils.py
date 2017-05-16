@@ -178,7 +178,7 @@ def data_to_token_ids(data_path, label_path, target_train_path, target_test_path
     if not gfile.Exists(target_test_path):
         print("Tokenizing data in %s" % label_path)
         labels = []
-        with gfile.GFile(vocabulary_path, mode="rb") as f:
+        with gfile.GFile(label_path, mode="rb") as f:
             labels.extend(f.readlines())
             labels = [tf.compat.as_bytes(line.strip()) for line in labels]
         lb = LabelBinarizer()
@@ -186,8 +186,6 @@ def data_to_token_ids(data_path, label_path, target_train_path, target_test_path
         with gfile.GFile(target_test_path, mode="w") as labels_file:
             for line in y:
                 labels_file.write(" ".join([str(lab) for lab in line])+"\n")
-    else:
-        raise ValueError("Vocabulary file %s not found.", vocabulary_path)
 
     if not gfile.Exists(target_train_path):
         print("Tokenizing data in %s" % data_path)
@@ -198,7 +196,7 @@ def data_to_token_ids(data_path, label_path, target_train_path, target_test_path
                 counter = 0
                 for line in data_file:
                     counter += 1
-                    if counter % 100000 == 0:
+                    if counter % 1000 == 0:
                         print("  tokenizing line %d" % counter)
                     token_ids = sentence_to_token_ids(tf.compat.as_bytes(line), vocab,
                                                       tokenizer, normalize_digits)
