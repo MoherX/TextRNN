@@ -21,13 +21,12 @@ import argparse
 import sys
 
 import numpy as np
-import pandas
 from sklearn import metrics
 import tensorflow as tf
 
 from tensorflow.contrib import learn
 
-import data_helper
+
 import data_utils
 FLAGS = None
 
@@ -73,7 +72,7 @@ def rnn_model(features, target):
     # Given encoding of RNN, take encoding of last step (e.g hidden size of the
     # neural network of last step) and pass it as features for logistic
     # regression over output classes.
-    target = tf.one_hot(target, 15, 1, 0)
+    # target = tf.one_hot(target, 15, 1, 0)
     logits = tf.contrib.layers.fully_connected(encoding, 15, activation_fn=None)
     loss = tf.contrib.losses.softmax_cross_entropy(logits, target)
 
@@ -95,6 +94,9 @@ def main(unused_argv):
 
     np.random.seed(10)
     shuffle_indices = np.random.permutation(np.arange(len(y)))
+    x = np.array(x)
+    y = np.array(y)
+
     x_shuffled = x[shuffle_indices]
     y_shuffled = y[shuffle_indices]
     dev_sample_index = -1 * int(FLAGS.test_sample_percentage * float(len(y)))

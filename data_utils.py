@@ -236,7 +236,7 @@ def prepare_data(data_dir, data_file, label_file, vocabulary_size, tokenizer=Non
     return data_ids_path, label_ids_path, vocab_path
 
 def readdata(train_ids_path, test_ids_path):
-    data_set= []
+    data_set = []
     target = []
     with gfile.GFile(train_ids_path, mode='r') as data_file:
         with gfile.GFile(test_ids_path, mode='r') as label_file:
