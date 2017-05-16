@@ -265,14 +265,14 @@ def prepare_data(data_dir, data_file, label_file, vocabulary_size, tokenizer=Non
         (2) path to the "to language" vocabulary file.
     """
     # Create vocabularies of the appropriate sizes.
-    vocab_path = os.path.join(data_dir, "rnn/bug%d" % vocabulary_size)
+    vocab_path = os.path.join(data_dir, "bug%d" % vocabulary_size)
     train_path = os.path.join(data_dir, data_file)
     create_vocabulary(vocab_path, train_path, vocabulary_size, tokenizer)
 
     # Create token ids for the training data.
     label_path = os.path.join(data_dir, label_file)
-    train_ids_path = train_path + ("/rnn/.train.ids%d" % vocabulary_size)
-    test_ids_path = train_path + ("/rnn/.test.ids%d" % vocabulary_size)
+    train_ids_path = train_path + (".train.ids%d" % vocabulary_size)
+    test_ids_path = train_path + (".test.ids%d" % vocabulary_size)
     data_to_token_ids(train_path, label_path, train_ids_path, test_ids_path, vocab_path, tokenizer)
 
     return train_ids_path, vocab_path
