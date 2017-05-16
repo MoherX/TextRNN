@@ -28,7 +28,7 @@ import tensorflow as tf
 from tensorflow.contrib import learn
 
 import data_helper
-
+import data_utils
 FLAGS = None
 
 MAX_DOCUMENT_LENGTH = 10
@@ -90,15 +90,8 @@ def rnn_model(features, target):
 def main(unused_argv):
     global n_words
     # Prepare training and testing data
-    bug_data = data_helper.load_data(FLAGS.data_file, FLAGS.label_file)
-    x = pandas.DataFrame(bug_data.train.data)[1]
-    y = pandas.Series(bug_data.train.target)
-
-    # Process vocabulary
-    vocab_processor = learn.preprocessing.VocabularyProcessor(MAX_DOCUMENT_LENGTH)
-    x = np.array(list(vocab_processor.fit_transform(x)))
-    n_words = len(vocab_processor.vocabulary_)
-    print('Total words: %d' % n_words)
+    train_ids_path, test_ids_path, _ = data_utils.prepare_data(FLAGS.data_dir, FLAGS.data_file, FLAGS.label_file, FLAGS.vocabulary_size)
+    x, y = data_utils.readdata(train_ids_path, test_ids_path)
 
     np.random.seed(10)
     shuffle_indices = np.random.permutation(np.arange(len(y)))
@@ -107,8 +100,6 @@ def main(unused_argv):
     dev_sample_index = -1 * int(FLAGS.test_sample_percentage * float(len(y)))
     x_train, x_test = x_shuffled[:dev_sample_index], x_shuffled[dev_sample_index:]
     y_train, y_test = y_shuffled[:dev_sample_index], y_shuffled[dev_sample_index:]
-
-
 
     # Build model
     # Switch between rnn_model and bag_of_words_model to test different models.
@@ -140,14 +131,20 @@ if __name__ == '__main__':
         action='store_true'
     )
     parser.add_argument(
+        '--data_dir',
+        default="../../data/data_by_ocean/eclipse/",
+        help='data direction',
+        action='store_true'
+    )
+    parser.add_argument(
         '--data_file',
-        default="../../data/data_by_ocean/eclipse/textForLDA_final.csv",
+        default="textForLDA_final.csv",
         help='data path',
         action='store_true'
     )
     parser.add_argument(
         '--label_file',
-        default="../../data/data_by_ocean/eclipse/fixer.csv",
+        default="fixer.csv",
         help='label path',
         action='store_true'
     )
@@ -157,5 +154,12 @@ if __name__ == '__main__':
         help='Percentage of the training data to use for test',
         action='store_true'
     )
+    parser.add_argument(
+        '--vocabulary_size',
+        default=100000,
+        help='vocabulary size',
+        action='store_true'
+    )
+
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)

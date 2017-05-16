@@ -46,50 +46,6 @@ UNK_ID = 3
 _WORD_SPLIT = re.compile(b"([.,!?\"':;)(])")
 _DIGIT_RE = re.compile(br"\d")
 
-# URLs for WMT data.
-_WMT_ENFR_TRAIN_URL = "http://www.statmt.org/wmt10/training-giga-fren.tar"
-_WMT_ENFR_DEV_URL = "http://www.statmt.org/wmt15/dev-v2.tgz"
-
-
-def maybe_download(directory, filename, url):
-    """Download filename from url unless it's already in directory."""
-    if not os.path.exists(directory):
-        print("Creating directory %s" % directory)
-        os.mkdir(directory)
-    filepath = os.path.join(directory, filename)
-    if not os.path.exists(filepath):
-        print("Downloading %s to %s" % (url, filepath))
-        filepath, _ = urllib.request.urlretrieve(url, filepath)
-        statinfo = os.stat(filepath)
-        print("Successfully downloaded", filename, statinfo.st_size, "bytes")
-    return filepath
-
-
-def gunzip_file(gz_path, new_path):
-    """Unzips from gz_path into new_path."""
-    print("Unpacking %s to %s" % (gz_path, new_path))
-    with gzip.open(gz_path, "rb") as gz_file:
-        with open(new_path, "wb") as new_file:
-            for line in gz_file:
-                new_file.write(line)
-
-
-def get_wmt_enfr_dev_set(directory):
-    """Download the WMT en-fr training corpus to directory unless it's there."""
-    dev_name = "newstest2013"
-    dev_path = os.path.join(directory, dev_name)
-    if not (gfile.Exists(dev_path + ".fr") and gfile.Exists(dev_path + ".en")):
-        dev_file = maybe_download(directory, "dev-v2.tgz", _WMT_ENFR_DEV_URL)
-        print("Extracting tgz file %s" % dev_file)
-        with tarfile.open(dev_file, "r:gz") as dev_tar:
-            fr_dev_file = dev_tar.getmember("dev/" + dev_name + ".fr")
-            en_dev_file = dev_tar.getmember("dev/" + dev_name + ".en")
-            fr_dev_file.name = dev_name + ".fr"  # Extract without "dev/" prefix.
-            en_dev_file.name = dev_name + ".en"
-            dev_tar.extract(fr_dev_file, directory)
-            dev_tar.extract(en_dev_file, directory)
-    return dev_path
-
 
 def basic_tokenizer(sentence):
     """Very basic tokenizer: split the sentence into a list of tokens."""
@@ -275,11 +231,24 @@ def prepare_data(data_dir, data_file, label_file, vocabulary_size, tokenizer=Non
     test_ids_path = train_path + (".test.ids%d" % vocabulary_size)
     data_to_token_ids(train_path, label_path, train_ids_path, test_ids_path, vocab_path, tokenizer)
 
-    return train_ids_path, vocab_path
+    return train_ids_path, test_ids_path, vocab_path
 
+def readdata(train_ids_path, test_ids_path):
+    data= []
+    target = []
+    with gfile.GFile(train_ids_path, mode='r') as data_file:
+        with gfile.GFile(test_ids_path, mode='r') as label_file:
+            data, label = data_file.readline(), label_file.readline()
+            while data and label:
+                data_ids = [int(x) for x in data.split()]
+                label_ids = [int(x) for x in label.split()]
+                data.append(data_ids)
+                target.append(label_ids)
+                data, label = data_file.readline(), label_file.readline()
+    return data, target
 
 if __name__ == "__main__":
-    train_ids_path, vocab_path = prepare_data("../../data/data_by_ocean/eclipse/",
+    train_ids_path, test_ids_path, vocab_path= prepare_data("../../data/data_by_ocean/eclipse/",
                                               "textForLDA_final.csv",
                                               "fixer.csv",
-                                              4000)
+                                              100000)
