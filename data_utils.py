@@ -157,7 +157,7 @@ def sentence_to_token_ids(sentence, vocabulary,
     return [vocabulary.get(_DIGIT_RE.sub(b"0", w), UNK_ID) for w in words]
 
 
-def data_to_token_ids(data_path, label_path, target_train_path, target_test_path, vocabulary_path,
+def data_to_token_ids(data_path, label_path, target_data_path, target_label_path, vocabulary_path,
                       tokenizer=None, normalize_digits=True):
     """Tokenize data file and turn into token-ids using given vocabulary file.
 
@@ -168,14 +168,14 @@ def data_to_token_ids(data_path, label_path, target_train_path, target_test_path
   Args:
     data_path: path to the train data file in one-sentence-per-line format.
     label_path: path to the test data file in one-sentence-per-line format.
-    target_train_path: path where the file with train data token-ids will be created.
-    target_test_path: path where the file with test data token-ids will be created.
+    target_data_path: path where the file with  train data token-ids will be created.
+    target_label_path: path where the file with label data token-ids will be created.
     vocabulary_path: path to the vocabulary file.
     tokenizer: a function to use to tokenize each sentence;
       if None, basic_tokenizer will be used.
     normalize_digits: Boolean; if true, all digits are replaced by 0s.
   """
-    if not gfile.Exists(target_test_path):
+    if not gfile.Exists(target_label_path):
         print("Tokenizing data in %s" % label_path)
         labels = []
         with gfile.GFile(label_path, mode="rb") as f:
@@ -183,16 +183,20 @@ def data_to_token_ids(data_path, label_path, target_train_path, target_test_path
             labels = [tf.compat.as_bytes(line.split(',')[1].strip()) for line in labels]
         lb = LabelBinarizer()
         y = lb.fit_transform(labels)
-        with gfile.GFile(target_test_path, mode="w") as labels_file:
+        with gfile.GFile(target_label_path, mode="w") as labels_file:
+            counter = 0
             for line in y:
-                labels_file.write(" ".join([str(lab) for lab in line])+"\n")
+                counter += 1
+                if counter % 1000 == 0:
+                    print("  writing label ids line %d" % counter)
+                    labels_file.write(" ".join([str(lab) for lab in line])+"\n")
 
-    if not gfile.Exists(target_train_path):
+    if not gfile.Exists(target_data_path):
         print("Tokenizing data in %s" % data_path)
         vocab, _ = initialize_vocabulary(vocabulary_path)
 
         with gfile.GFile(data_path, mode="rb") as data_file:
-            with gfile.GFile(target_train_path, mode="w") as tokens_file:
+            with gfile.GFile(target_data_path, mode="w") as tokens_file:
                 counter = 0
                 for line in data_file:
                     counter += 1
@@ -220,19 +224,19 @@ def prepare_data(data_dir, data_file, label_file, vocabulary_size, tokenizer=Non
     """
     # Create vocabularies of the appropriate sizes.
     vocab_path = os.path.join(data_dir, "bug%d" % vocabulary_size)
-    train_path = os.path.join(data_dir, data_file)
-    create_vocabulary(vocab_path, train_path, vocabulary_size, tokenizer)
+    data_path = os.path.join(data_dir, data_file)
+    create_vocabulary(vocab_path, data_path, vocabulary_size, tokenizer)
 
     # Create token ids for the training data.
     label_path = os.path.join(data_dir, label_file)
-    train_ids_path = train_path + (".train.ids%d" % vocabulary_size)
-    test_ids_path = train_path + (".test.ids%d" % vocabulary_size)
-    data_to_token_ids(train_path, label_path, train_ids_path, test_ids_path, vocab_path, tokenizer)
+    data_ids_path = data_path + (".data.ids%d" % vocabulary_size)
+    label_ids_path = data_path + (".label.ids%d" % vocabulary_size)
+    data_to_token_ids(data_path, label_path, data_ids_path, label_ids_path, vocab_path, tokenizer)
 
-    return train_ids_path, test_ids_path, vocab_path
+    return data_ids_path, label_ids_path, vocab_path
 
 def readdata(train_ids_path, test_ids_path):
-    data= []
+    data_set= []
     target = []
     with gfile.GFile(train_ids_path, mode='r') as data_file:
         with gfile.GFile(test_ids_path, mode='r') as label_file:
@@ -240,13 +244,13 @@ def readdata(train_ids_path, test_ids_path):
             while data and label:
                 data_ids = [int(x) for x in data.split()]
                 label_ids = [int(x) for x in label.split()]
-                data.append(data_ids)
+                data_set.append(data_ids)
                 target.append(label_ids)
                 data, label = data_file.readline(), label_file.readline()
-    return data, target
+    return data_set, target
 
 if __name__ == "__main__":
-    train_ids_path, test_ids_path, vocab_path= prepare_data("../../data/data_by_ocean/eclipse/",
+    train_ids_path, label_ids_path, vocab_path= prepare_data("../../data/data_by_ocean/eclipse/",
                                               "textForLDA_final.csv",
                                               "fixer.csv",
                                               100000)
