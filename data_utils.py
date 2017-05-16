@@ -180,7 +180,7 @@ def data_to_token_ids(data_path, label_path, target_train_path, target_test_path
         labels = []
         with gfile.GFile(label_path, mode="rb") as f:
             labels.extend(f.readlines())
-            labels = [tf.compat.as_bytes(line.strip()) for line in labels]
+            labels = [tf.compat.as_bytes(line.split(',')[1].strip()) for line in labels]
         lb = LabelBinarizer()
         y = lb.fit_transform(labels)
         with gfile.GFile(target_test_path, mode="w") as labels_file:
