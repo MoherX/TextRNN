@@ -26,6 +26,7 @@ from sklearn import metrics
 import tensorflow as tf
 
 from tensorflow.contrib import learn
+import pdb
 
 FLAGS = None
 
@@ -102,7 +103,7 @@ def main(unused_argv):
     x_test = np.array(list(vocab_processor.transform(x_test)))
     n_words = len(vocab_processor.vocabulary_)
     print('Total words: %d' % n_words)
-
+    pdb.set_trace()
     # Build model
     # Switch between rnn_model and bag_of_words_model to test different models.
     model_fn = rnn_model

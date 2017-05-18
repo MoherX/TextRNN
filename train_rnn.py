@@ -19,20 +19,23 @@ from __future__ import print_function
 
 import argparse
 import sys
-
+import pdb
 import numpy as np
+import pandas as pd
 from sklearn import metrics
+
 import tensorflow as tf
-
 from tensorflow.contrib import learn
-
+from sklearn.preprocessing import LabelBinarizer
 
 import data_utils
+
+
 FLAGS = None
 
 MAX_DOCUMENT_LENGTH = 10
-EMBEDDING_SIZE = 50
-n_words = 0
+EMBEDDING_SIZE = 500
+n_words = 100000
 
 def bag_of_words_model(features, target):
     """A bag-of-words model. Note it disregards the word order in the text."""
@@ -89,20 +92,29 @@ def rnn_model(features, target):
 def main(unused_argv):
     global n_words
     # Prepare training and testing data
-    train_ids_path, test_ids_path, _ = data_utils.prepare_data(FLAGS.data_dir, FLAGS.data_file, FLAGS.label_file, FLAGS.vocabulary_size)
-    x, y = data_utils.readdata(train_ids_path, test_ids_path)
+    data, label = data_utils.read_raw_data(FLAGS.data_dir+FLAGS.data_file, FLAGS.label_file)
+
+    x = pd.DataFrame(data)
+    y = pd.Series(label)
+
+    # Process vocabulary
+    vocab_processor = learn.preprocessing.VocabularyProcessor(MAX_DOCUMENT_LENGTH)
+    x = np.array(list(vocab_processor.fit_transform(x)))
+    n_words = len(vocab_processor.vocabulary_)
+
+    # Process label to one hot vector
+    lb = LabelBinarizer()
+    y = lb.fit_transform(y)
 
     np.random.seed(10)
     shuffle_indices = np.random.permutation(np.arange(len(y)))
-    x = np.array(x)
-    y = np.array(y)
-
     x_shuffled = x[shuffle_indices]
     y_shuffled = y[shuffle_indices]
     dev_sample_index = -1 * int(FLAGS.test_sample_percentage * float(len(y)))
     x_train, x_test = x_shuffled[:dev_sample_index], x_shuffled[dev_sample_index:]
     y_train, y_test = y_shuffled[:dev_sample_index], y_shuffled[dev_sample_index:]
 
+    # pdb.set_trace()
     # Build model
     # Switch between rnn_model and bag_of_words_model to test different models.
     model_fn = rnn_model

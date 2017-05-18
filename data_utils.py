@@ -18,15 +18,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import gzip
+
 import os
 import re
-import tarfile
-
-from six.moves import urllib
+import numpy as np
 
 from sklearn.preprocessing import LabelBinarizer
-
 from tensorflow.python.platform import gfile
 import tensorflow as tf
 
@@ -235,19 +232,30 @@ def prepare_data(data_dir, data_file, label_file, vocabulary_size, tokenizer=Non
 
     return data_ids_path, label_ids_path, vocab_path
 
-def readdata(train_ids_path, test_ids_path):
+def readdata(data_ids_path, label_ids_path):
     data_set = []
     target = []
-    with gfile.GFile(train_ids_path, mode='r') as data_file:
-        with gfile.GFile(test_ids_path, mode='r') as label_file:
+    print("Reading data ids from %s and %s" %(data_ids_path, label_ids_path))
+    with gfile.GFile(data_ids_path, mode='r') as data_file:
+        with gfile.GFile(label_ids_path, mode='r') as label_file:
             data, label = data_file.readline(), label_file.readline()
             while data and label:
                 data_ids = [int(x) for x in data.split()]
                 label_ids = [int(x) for x in label.split()]
-                data_set.append(data_ids)
-                target.append(label_ids)
+                data_set.append(np.array(data_ids, dtype=np.int64))
+                target.append(np.array(label_ids, dtype=np.int64))
                 data, label = data_file.readline(), label_file.readline()
-    return data_set, target
+    return np.array(data_set), np.array(target)
+
+def read_raw_data(data_path, label_path):
+    data = []
+    label = []
+    with gfile.GFile(data_path, 'rb') as file:
+        data.extend(file.readlines())
+    with gfile.GFile(label_path, 'rb') as file:
+        label.extend(file.read_lines())
+        label = [tf.compat.as_bytes(line.split(',')[1].strip()) for line in label]
+    return data, label
 
 if __name__ == "__main__":
     train_ids_path, label_ids_path, vocab_path= prepare_data("../../data/data_by_ocean/eclipse/",
