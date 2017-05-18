@@ -247,13 +247,35 @@ def readdata(data_ids_path, label_ids_path):
                 data, label = data_file.readline(), label_file.readline()
     return np.array(data_set), np.array(target)
 
+
+def clean_str(string):
+    """
+    Tokenization/string cleaning for all datasets except for SST.
+    Original taken from https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
+    """
+    string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
+    string = re.sub(r"\'s", " \'s", string)
+    string = re.sub(r"\'ve", " \'ve", string)
+    string = re.sub(r"n\'t", " n\'t", string)
+    string = re.sub(r"\'re", " \'re", string)
+    string = re.sub(r"\'d", " \'d", string)
+    string = re.sub(r"\'ll", " \'ll", string)
+    string = re.sub(r",", " , ", string)
+    string = re.sub(r"!", " ! ", string)
+    string = re.sub(r"\(", " \( ", string)
+    string = re.sub(r"\)", " \) ", string)
+    string = re.sub(r"\?", " \? ", string)
+    string = re.sub(r"\s{2,}", " ", string)
+    return string.strip().lower()
+
+
 def read_raw_data(data_path, label_path):
     data = []
     label = []
-    with gfile.GFile(data_path, 'rb') as file:
-        data.extend(file.readlines())
+    with open(data_path, 'r', encoding='latin-1') as file:
+        data.extend([clean_str(s.strip()) for s in file.readlines()])
     with gfile.GFile(label_path, 'rb') as file:
-        label.extend(file.read_lines())
+        label.extend(file.readlines())
         label = [tf.compat.as_bytes(line.split(',')[1].strip()) for line in label]
     return data, label
 

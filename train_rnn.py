@@ -33,7 +33,7 @@ import data_utils
 
 FLAGS = None
 
-MAX_DOCUMENT_LENGTH = 10
+MAX_DOCUMENT_LENGTH = 10000
 EMBEDDING_SIZE = 500
 n_words = 100000
 
@@ -76,7 +76,7 @@ def rnn_model(features, target):
     # neural network of last step) and pass it as features for logistic
     # regression over output classes.
     # target = tf.one_hot(target, 15, 1, 0)
-    logits = tf.contrib.layers.fully_connected(encoding, 15, activation_fn=None)
+    logits = tf.contrib.layers.fully_connected(encoding, 2794, activation_fn=None)
     loss = tf.contrib.losses.softmax_cross_entropy(logits, target)
 
     # Create a training op.
@@ -92,35 +92,36 @@ def rnn_model(features, target):
 def main(unused_argv):
     global n_words
     # Prepare training and testing data
-    data, label = data_utils.read_raw_data(FLAGS.data_dir+FLAGS.data_file, FLAGS.label_file)
-
-    x = pd.DataFrame(data)
-    y = pd.Series(label)
-
+    data, label = data_utils.read_raw_data(FLAGS.data_dir + FLAGS.data_file, FLAGS.data_dir + FLAGS.label_file)
     # Process vocabulary
     vocab_processor = learn.preprocessing.VocabularyProcessor(MAX_DOCUMENT_LENGTH)
-    x = np.array(list(vocab_processor.fit_transform(x)))
-    n_words = len(vocab_processor.vocabulary_)
 
+    x = np.array(list(vocab_processor.fit_transform(data)))
+    del data
     # Process label to one hot vector
     lb = LabelBinarizer()
-    y = lb.fit_transform(y)
-
+    y = lb.fit_transform(label)
+    del label
     np.random.seed(10)
-    shuffle_indices = np.random.permutation(np.arange(len(y)))
-    x_shuffled = x[shuffle_indices]
-    y_shuffled = y[shuffle_indices]
+    # shuffle_indices = np.random.permutation(np.arange(len(y)))
+    # x_shuffled = tf.random_shuffle(x, seed=10)
+    # y_shuffled = tf.random_shuffle(y, seed=10)
+    # x_shuffled = x[shuffle_indices]
+    # y_shuffled = y[shuffle_indices]
+    x_shuffled = x
+    y_shuffled = y
     dev_sample_index = -1 * int(FLAGS.test_sample_percentage * float(len(y)))
     x_train, x_test = x_shuffled[:dev_sample_index], x_shuffled[dev_sample_index:]
     y_train, y_test = y_shuffled[:dev_sample_index], y_shuffled[dev_sample_index:]
-
     # pdb.set_trace()
+
     # Build model
     # Switch between rnn_model and bag_of_words_model to test different models.
     model_fn = rnn_model
     if FLAGS.bow_model:
         model_fn = bag_of_words_model
-    classifier = learn.Estimator(model_fn=model_fn)
+
+    classifier = learn.SKCompat(learn.Estimator(model_fn=model_fn))
 
     # Train and predict
     classifier.fit(x_train, y_train, steps=100)
