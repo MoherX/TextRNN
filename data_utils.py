@@ -276,7 +276,7 @@ def read_raw_data(data_path, label_path):
         data.extend([clean_str(s.strip()) for s in file.readlines()])
     with gfile.GFile(label_path, 'rb') as file:
         label.extend(file.readlines())
-        label = [tf.compat.as_bytes(line.split(',')[1].strip()) for line in label]
+        label = [tf.compat.as_str(line.split(',')[1].strip()) for line in label]
     return data, label
 
 if __name__ == "__main__":
