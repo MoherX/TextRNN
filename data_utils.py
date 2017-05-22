@@ -271,13 +271,13 @@ def clean_str(string):
 
 def read_raw_data(data_path, label_path):
     data = []
-    label = []
+    labels = []
     with open(data_path, 'r', encoding='latin-1') as file:
         data.extend([clean_str(s.strip()) for s in file.readlines()])
-    with gfile.GFile(label_path, 'rb') as file:
-        label.extend(file.readlines())
-        label = [tf.compat.as_str(line.split(',')[1].strip()) for line in label]
-    return data, label
+    with gfile.GFile(label_path, mode="r") as f:
+        labels.extend(f.readlines())
+        labels = [line.split(',')[1].strip() for line in labels]
+    return data, labels
 
 if __name__ == "__main__":
     train_ids_path, label_ids_path, vocab_path= prepare_data("../../data/data_by_ocean/eclipse/",

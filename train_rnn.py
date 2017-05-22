@@ -19,17 +19,17 @@ from __future__ import print_function
 
 import argparse
 import sys
-import pdb
-import numpy as np
-import pandas as pd
-from sklearn import metrics
 
+import numpy as np
+import pandas
+from sklearn import metrics
 import tensorflow as tf
-from tensorflow.contrib import learn
+from tensorflow.contrib.layers.python.layers import encoders
+
+learn = tf.contrib.learn
 from sklearn.preprocessing import LabelBinarizer
 
 import data_utils
-
 
 FLAGS = None
 
@@ -37,19 +37,23 @@ MAX_DOCUMENT_LENGTH = 10000
 EMBEDDING_SIZE = 500
 n_words = 100000
 
+
 def bag_of_words_model(features, target):
     """A bag-of-words model. Note it disregards the word order in the text."""
     target = tf.one_hot(target, 15, 1, 0)
-    features = tf.contrib.layers.bow_encoder(
+    features = encoders.bow_encoder(
         features, vocab_size=n_words, embed_dim=EMBEDDING_SIZE)
     logits = tf.contrib.layers.fully_connected(features, 15, activation_fn=None)
     loss = tf.contrib.losses.softmax_cross_entropy(logits, target)
     train_op = tf.contrib.layers.optimize_loss(
-        loss, tf.contrib.framework.get_global_step(),
-        optimizer='Adam', learning_rate=0.01)
-    return (
-        {'class': tf.argmax(logits, 1), 'prob': tf.nn.softmax(logits)},
-        loss, train_op)
+        loss,
+        tf.contrib.framework.get_global_step(),
+        optimizer='Adam',
+        learning_rate=0.01)
+    return ({
+                'class': tf.argmax(logits, 1),
+                'prob': tf.nn.softmax(logits)
+            }, loss, train_op)
 
 
 def rnn_model(features, target):
@@ -66,11 +70,11 @@ def rnn_model(features, target):
     word_list = tf.unstack(word_vectors, axis=1)
 
     # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
-    cell = tf.nn.rnn_cell.GRUCell(EMBEDDING_SIZE)
+    cell = tf.contrib.rnn.GRUCell(EMBEDDING_SIZE)
 
     # Create an unrolled Recurrent Neural Networks to length of
     # MAX_DOCUMENT_LENGTH and passes word_list as inputs for each unit.
-    _, encoding = tf.nn.rnn(cell, word_list, dtype=tf.float32)
+    _, encoding = tf.contrib.rnn.static_rnn(cell, word_list, dtype=tf.float32)
 
     # Given encoding of RNN, take encoding of last step (e.g hidden size of the
     # neural network of last step) and pass it as features for logistic
@@ -81,12 +85,15 @@ def rnn_model(features, target):
 
     # Create a training op.
     train_op = tf.contrib.layers.optimize_loss(
-        loss, tf.contrib.framework.get_global_step(),
-        optimizer='Adam', learning_rate=0.01)
+        loss,
+        tf.contrib.framework.get_global_step(),
+        optimizer='Adam',
+        learning_rate=0.01)
 
-    return (
-        {'class': tf.argmax(logits, 1), 'prob': tf.nn.softmax(logits)},
-        loss, train_op)
+    return ({
+                'class': tf.argmax(logits, 1),
+                'prob': tf.nn.softmax(logits)
+            }, loss, train_op)
 
 
 def main(unused_argv):
