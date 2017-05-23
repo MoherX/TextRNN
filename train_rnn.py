@@ -81,8 +81,8 @@ def rnn_model(features, target):
     # regression over output classes.
     # target = tf.one_hot(target, 15, 1, 0)
     logits = tf.contrib.layers.fully_connected(encoding, 2794, activation_fn=None)
-    loss = tf.contrib.losses.softmax_cross_entropy(logits, target)
-
+    loss = tf.losses.softmax_cross_entropy(logits, target)
+    tf.losses.softmax_cross_entropy(onehot_labels=tar)
     # Create a training op.
     train_op = tf.contrib.layers.optimize_loss(
         loss,
@@ -109,7 +109,7 @@ def main(unused_argv):
     lb = LabelBinarizer()
     y = lb.fit_transform(label)
     del label
-    np.random.seed(10)
+    # np.random.seed(10)
     # shuffle_indices = np.random.permutation(np.arange(len(y)))
     # x_shuffled = tf.random_shuffle(x, seed=10)
     # y_shuffled = tf.random_shuffle(y, seed=10)
