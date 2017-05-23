@@ -107,7 +107,7 @@ def main(unused_argv):
     del data
     # Process label to one hot vector
     lb = LabelBinarizer()
-    y = lb.fit_transform(label)
+    y = np.array(list(lb.fit_transform(label)))
     del label
     # np.random.seed(10)
     # shuffle_indices = np.random.permutation(np.arange(len(y)))
@@ -131,7 +131,7 @@ def main(unused_argv):
     classifier = learn.SKCompat(learn.Estimator(model_fn=model_fn))
 
     # Train and predict
-    classifier.fit(x_train, y_train, steps=100)
+    classifier.fit(x_train, y_train, steps=20000)
     y_predicted = [
         p['class'] for p in classifier.predict(x_test, as_iterable=True)]
     score = metrics.accuracy_score(y_test, y_predicted)
